@@ -41,7 +41,7 @@ void HelloPass::parseProperties(const Properties& props)
         else if (key == kSpeed)
             mSpeed = value;
         else if (key == kShowGrid)
-            mShowGrid = static_cast<bool>(value);
+            mShowGrid = value; // implicit conversion, same pattern as upstream MinimalPathTracer
         else
             logWarning("Unknown property '{}' in HelloPass properties.", key);
     }

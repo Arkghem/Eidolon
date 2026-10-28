@@ -145,7 +145,8 @@ if (Test-Path $cmakeLists) {
 
 if ($current -ceq $content) {
     Write-Ok "vendor/falcor injection already up to date ($($packages.Count) package(s))."
-    return
+    # Explicit exit code: callers (verify.ps1 -Check) inspect $LASTEXITCODE.
+    exit 0
 }
 
 if ($Check) {
@@ -164,3 +165,5 @@ Write-Host ''
 Write-Host 'vendor/falcor working tree:' -ForegroundColor DarkGray
 if ($status) { $status | ForEach-Object { Write-Host "  $_" -ForegroundColor DarkGray } }
 else { Write-Host '  (clean)' -ForegroundColor DarkGray }
+
+exit 0
