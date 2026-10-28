@@ -12,7 +12,9 @@ from falcor import *
 def render_graph_HelloPass():
     g = RenderGraph("HelloPass")
     g.addPass(createPass("HelloPass"), "HelloPass")
-    g.addPass(createPass("ToneMapper"), "ToneMapper")
+    # Pin the tone mapping so the smoke test is deterministic: auto exposure
+    # depends on scene metadata, and this graph deliberately has no scene.
+    g.addPass(createPass("ToneMapper", {"autoExposure": False}), "ToneMapper")
     g.addEdge("HelloPass.color", "ToneMapper.src")
     g.markOutput("ToneMapper.dst")
     return g
