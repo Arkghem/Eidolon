@@ -1,0 +1,53 @@
+# -----------------------------------------------------------------------------
+# Eidolon research workspace -- ignored paths
+# -----------------------------------------------------------------------------
+
+# Run artifacts: rendered frames, logs, RenderDoc captures, metrics.
+/out/
+
+# Per-experiment outputs. Only `figures/` and notes are meant to be committed.
+/experiments/**/results/
+
+# Large scene assets / environment maps. Kept outside version control.
+/assets/scenes/
+/assets/envmaps/
+/assets/link/
+/assets/orca/
+/assets/pbrt/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.vs/
+Thumbs.db
+desktop.ini
+*.swp
+*.user
+*.suo
+CMakeUserPresets.json
+
+# RenderDoc captures must never be committed (can be hundreds of MB).
+*.rdc
+*.rdc.bak
+*.cap
+
+# Logs
+*.log
+
+# Vendored Falcor build state (upstream .gitignore covers most of it; these keep
+# `git status` tidy in the parent repo as well).
+/vendor/falcor/build/
+/vendor/falcor/media/
+/vendor/falcor/media_internal/
+/vendor/falcor/external/packman/
+/vendor/falcor/tools/.packman/
+
+# Local toolchain copies
+/tools/.packman/
+/tools/_tmp/

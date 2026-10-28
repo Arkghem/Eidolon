@@ -1,0 +1,14 @@
+{
+  "name": "0001-hello-pass",
+  "graph": "graphs/hello_pass.py",
+  "scene": "",
+  "width": 1920,
+  "height": 1080,
+  "headless": false,
+  "tag": "0001-hello-pass",
+  "extraArgs": [],
+  "capture": {
+    "mode": "interactive",
+    "frame": -1
+  }
+}

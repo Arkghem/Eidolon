@@ -1,0 +1,13 @@
+# ============================================================================
+#  Eidolon pass registry -- single source of truth for the overlay injection.
+#
+#  每一行是一个插件库（= research\passes\<名字>\ 目录，且该目录必须有 CMakeLists.txt）。
+#  空行与 # 开头的行会被忽略。顺序无意义：脚本会排序后写进生成块。
+#
+#  改完这里之后跑：  tools\sync-passes.ps1   然后再 configure（tools\build.ps1 -Configure）
+#
+#  生成结果写在 vendor\falcor\Source\RenderPasses\CMakeLists.txt 末尾的
+#  "eidolon overlay" 标记块里。不要手工编辑那个文件——它随时会被本清单覆盖。
+# ============================================================================
+
+HelloPass
