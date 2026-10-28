@@ -21,7 +21,7 @@
 
 .EXAMPLE
     # rebuild only my plugin after a C++ change
-    pwsh -File tools\build.ps1 -Target HelloPT
+    pwsh -File tools\build.ps1 -Target HelloPass
 #>
 [CmdletBinding()]
 param(

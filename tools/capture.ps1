@@ -22,10 +22,10 @@
     the commit, graph, scene and versions, so a capture stays interpretable.
 
 .EXAMPLE
-    pwsh -File tools\capture.ps1 -Experiment 0001-hello-pt -Graph experiments\0001-hello-pt\graphs\hello_pt.py -Scene media\Arcade\Arcade.pyscene
+    pwsh -File tools\capture.ps1 -Experiment 0001-hello-pass -Graph experiments\0001-hello-pass\graphs\hello_pass.py -Scene media\Arcade\Arcade.pyscene
 
 .EXAMPLE
-    pwsh -File tools\capture.ps1 -Mode cmd -Experiment smoke -Graph experiments\0001-hello-pt\graphs\hello_pt.py -Frame 10 -TimeoutSeconds 90 -ExtraArgs '--headless'
+    pwsh -File tools\capture.ps1 -Mode cmd -Experiment smoke -Graph experiments\0001-hello-pass\graphs\hello_pass.py -Frame 10 -TimeoutSeconds 90 -ExtraArgs '--headless'
 #>
 [CmdletBinding()]
 param(

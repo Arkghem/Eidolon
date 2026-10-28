@@ -14,10 +14,10 @@
         into out/frames/<tag>/.
 
 .EXAMPLE
-    pwsh -File tools\run-mogwai.ps1 -Graph experiments\0001-hello-pt\graphs\hello_pt.py -Scene media\Arcade\Arcade.pyscene
+    pwsh -File tools\run-mogwai.ps1 -Graph experiments\0001-hello-pass\graphs\hello_pass.py -Scene media\Arcade\Arcade.pyscene
 
 .EXAMPLE
-    pwsh -File tools\run-mogwai.ps1 -Graph experiments\0001-hello-pt\graphs\hello_pt.py -Headless -Tag hello -ExtraArgs '--use-cache'
+    pwsh -File tools\run-mogwai.ps1 -Graph experiments\0001-hello-pass\graphs\hello_pass.py -Headless -Tag hello -ExtraArgs '--use-cache'
 #>
 [CmdletBinding()]
 param(
