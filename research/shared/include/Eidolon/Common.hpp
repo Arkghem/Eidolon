@@ -1,9 +1,14 @@
 // Shared host-side helpers for Eidolon research render passes.
 //
-// Everything here is deliberately small and dependency-free so that it can be
-// included from any pass without dragging in extra compile time. Shader-side
-// conventions live in research/shared/shaders/ (see the README there).
+// Everything here is deliberately small and dependency-free so it can be
+// included from any pass without dragging in extra compile time.
+//
+// NOTE ON STYLE: this header is included from *plugin* code, not from inside
+// Falcor, so names from the framework must be qualified (Falcor::...). Do not
+// rely on a `using namespace Falcor;` from the including translation unit.
 #pragma once
+
+#include <cstdint>
 
 #include "Falcor.h"
 
@@ -14,62 +19,51 @@ namespace Eidolon
 // Frame contract
 //
 // Passes that cooperate (a path tracer feeding a denoiser, an upscaler reading
-// velocity, an accumulation pass) agree on a small set of names in the render
-// graph's InternalDictionary instead of hard-coding strings at every call site.
+// motion vectors, an accumulation pass) agree on a small set of names in the
+// render graph's internal dictionary instead of hard-coding strings at every
+// call site. Keep this list short and document every addition in
+// docs/01-architecture.md.
 //
 //   color    RGBA16F   HDR radiance
-//   depth    D32F      view-space / device depth, producer-defined but documented
-//   motion   RG16F     screen-space motion vectors in pixels
+//   depth    D32F      depth (the producer documents whether it is device or
+//                      linear view depth)
+//   motion   RG16F     screen-space motion vectors, in pixels
 //   frameIndex         uint32, monotonically increasing per graph execution
-//   spp                uint32, samples accumulated so far
-//
-// Keep additions here rare and documented in docs/01-architecture.md.
+//   spp                uint32, samples accumulated per pixel so far
 // -----------------------------------------------------------------------------
 
 constexpr const char* kFrameIndexKey = "eidolon/frameIndex";
 constexpr const char* kSppKey = "eidolon/spp";
 
 /// Read a uint32 from the internal dictionary, returning `fallback` when absent.
-inline uint32_t getUint(const Dictionary& dict, const char* key, uint32_t fallback = 0u)
+inline uint32_t getUint(Falcor::Dictionary& dict, const char* key, uint32_t fallback = 0u)
 {
-    return dict.keyExists(key) ? static_cast<uint32_t>(dict[key]) : fallback;
+    if (!dict.keyExists(key)) return fallback;
+    uint32_t value = dict[key];
+    return value;
 }
 
 /// Read a float from the internal dictionary, returning `fallback` when absent.
-inline float getFloat(const Dictionary& dict, const char* key, float fallback = 0.f)
+inline float getFloat(Falcor::Dictionary& dict, const char* key, float fallback = 0.f)
 {
-    return dict.keyExists(key) ? static_cast<float>(dict[key]) : fallback;
+    if (!dict.keyExists(key)) return fallback;
+    float value = dict[key];
+    return value;
 }
 
-inline uint32_t getFrameIndex(const Dictionary& dict)
+inline uint32_t getFrameIndex(Falcor::Dictionary& dict)
 {
     return getUint(dict, kFrameIndexKey, 0u);
 }
 
-inline void setFrameIndex(Dictionary& dict, uint32_t frameIndex)
+inline void setFrameIndex(Falcor::Dictionary& dict, uint32_t frameIndex)
 {
     dict[kFrameIndexKey] = frameIndex;
 }
 
-// -----------------------------------------------------------------------------
-// Small helpers used by most research passes.
-// -----------------------------------------------------------------------------
-
-/// Dispatch dimensions for a full-screen compute pass over `dims` pixels.
-inline uint3 dispatchDims(const uint2& dims)
+inline void setSpp(Falcor::Dictionary& dict, uint32_t spp)
 {
-    return uint3(dims.x, dims.y, 1u);
-}
-
-/// True when the scene reports a change that invalidates per-frame history
-/// (camera cut, topology change, ...). Passes that accumulate history must
-/// reset on this.
-inline bool sceneInvalidatesHistory(const ref<IScene>& pScene)
-{
-    if (!pScene) return true;
-    const auto updates = pScene->getUpdates();
-    return is_set(updates, IScene::UpdateFlags::RecompileNeeded) || is_set(updates, IScene::UpdateFlags::GeometryChanged) ||
-        is_set(updates, IScene::UpdateFlags::SceneChanged);
+    dict[kSppKey] = spp;
 }
 
 } // namespace Eidolon

@@ -234,5 +234,6 @@ $manifest = [ordered]@{
     appArgs = ($appArgs -join ' ')
 }
 $manifestPath = Join-Path $outDir 'manifest.json'
-($manifest | ConvertTo-Json -Depth 4) | Set-Content -Path $manifestPath -Encoding UTF8
+# No BOM: this file is read back by Python tooling and by git diff.
+Write-Utf8NoBom -Path $manifestPath -Content ($manifest | ConvertTo-Json -Depth 4)
 Write-Ok "manifest: $manifestPath"
