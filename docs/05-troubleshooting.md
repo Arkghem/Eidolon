@@ -70,6 +70,7 @@
 ## 运行时
 
 ### Mogwai 里看不到自己的 pass
+先跑 `pwsh -File tools\check-build.ps1`——它把下面 1–4 步自动化了。
 按顺序查：
 1. `<build>\bin\<Config>\plugins\<Name>.dll` 存在吗？
 2. `<build>\bin\<Config>\plugins\plugins.json` 里有名字吗？
@@ -125,6 +126,12 @@
   而仓库文件是 **UTF-8 无 BOM**（`.gitattributes` + `Write-Utf8NoBom` 保证的）。
 - 修：`Get-Content foo.md -Encoding UTF8`，或用 PowerShell 7 / VS Code 打开。
   这不是文件损坏——`[System.IO.File]::ReadAllText()` 与 git 都能正常显示。
+
+### JSON 配置/指标读不出来，或报告里标题是空的
+- 因：文件被存成了 **UTF-8 with BOM**（Windows 记事本、PS 5.1 的
+  `Set-Content -Encoding UTF8` 都会加），而严格的 `json.loads` / 首行匹配不认 BOM。
+- 修：`analysis/` 下的脚本已统一用 `utf-8-sig` 读取；自己写的脚本也请如此。
+  提交前可确认：`(Get-Content -Encoding Byte -TotalCount 3 file.json)` 不应是 `239 187 191`。
 
 ### 脚本里中文输出在某些终端变成方块
 - 控制台代码页问题。`chcp 65001` 或换 Windows Terminal + pwsh 7。

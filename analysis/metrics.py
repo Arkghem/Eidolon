@@ -68,7 +68,9 @@ def _ssim_uniform(a: np.ndarray, b: np.ndarray, window: int = 8) -> float:
             from numpy.lib.stride_tricks import sliding_window_view
 
             view = sliding_window_view(img, (window, window))
-            return np.einsum("ijkl,kl->ij", view, kernel)
+            m = np.einsum("ijkl,kl->ij", view, kernel)
+            # The padded view yields one extra row/column; crop back to the image.
+            return m[: x.shape[0], : x.shape[1]]
 
         mu_x = local_mean(xp)
         mu_y = local_mean(yp)

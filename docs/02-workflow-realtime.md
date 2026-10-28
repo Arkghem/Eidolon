@@ -26,10 +26,13 @@ pwsh -File tools\build.ps1 -Configure
 # 2) 日常：只重编我们的插件
 pwsh -File tools\build.ps1 -Target HelloPass
 
-# 3) 跑图（窗口模式，方便按 F5 / F12）
+# 3) 构建产物自检（DLL / plugins.json / 着色器部署）
+pwsh -File tools\check-build.ps1
+
+# 4) 跑图（窗口模式，方便按 F5 / F12）
 pwsh -File tools\run-experiment.ps1 -Experiment 0001-hello-pass
 
-# 4) 抓帧
+# 5) 抓帧
 pwsh -File tools\run-experiment.ps1 -Experiment 0001-hello-pass -Capture
 ```
 

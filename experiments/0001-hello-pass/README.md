@@ -34,9 +34,9 @@ pwsh -File tools\build.ps1 -Configure            # 首次：约 40-90 分钟
 pwsh -File tools\build.ps1 -Target HelloPass     # 之后只重编插件
 
 # 2) 构建产物自检
-#    期望存在：
-#      vendor\falcor\build\windows-vs2022\bin\RelWithDebInfo\plugins\HelloPass.dll
-#      vendor\falcor\build\windows-vs2022\bin\RelWithDebInfo\shaders\RenderPasses\HelloPass\HelloPass.cs.slang
+pwsh -File tools\check-build.ps1
+#    它逐项验证：Mogwai.exe / Falcor.dll / plugins\HelloPass.dll /
+#    plugins.json 里是否有 HelloPass / shaders\RenderPasses\HelloPass\ 是否有着色器
 
 # 3) 跑图
 pwsh -File tools\run-experiment.ps1 -Experiment 0001-hello-pass
