@@ -66,11 +66,7 @@ if (-not (Test-Path $mogwai)) {
 $graphPath = Resolve-ExistingPath -Path $Graph -What 'render graph'
 
 $sceneArg = $null
-if ($Scene) {
-    if (Test-Path $Scene) { $sceneArg = (Resolve-Path $Scene).Path }
-    elseif (Test-Path (Join-Path $script:EidolonRoot $Scene)) { $sceneArg = (Resolve-Path (Join-Path $script:EidolonRoot $Scene)).Path }
-    else { $sceneArg = $Scene } # let Falcor resolve it against media folders
-}
+if ($Scene) { $sceneArg = Resolve-FalcorScenePath -Scene $Scene }
 
 if (-not $LogFile) {
     $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
