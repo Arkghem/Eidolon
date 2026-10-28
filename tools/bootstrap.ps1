@@ -24,6 +24,7 @@
 #>
 [CmdletBinding()]
 param(
+    [switch]$SkipPreflight,
     [switch]$SkipInstall,
     [switch]$SkipVerify,
     [switch]$SkipBuild,
@@ -46,6 +47,18 @@ Write-Host "  falcor : $($script:FalcorPinnedRef) (vendored)"
 Write-Host ''
 
 $step = 0
+
+# -----------------------------------------------------------------------------
+# 0. Network preflight (informational; the first run downloads ~10 GB)
+# -----------------------------------------------------------------------------
+if ($SkipPreflight) {
+    Write-Skip '[0/5] network preflight (skipped)'
+}
+else {
+    Write-Step '[0/5] network preflight'
+    & (Join-Path $PSScriptRoot 'preflight.ps1')
+    Write-Host ''
+}
 
 # -----------------------------------------------------------------------------
 # 1. Toolchain

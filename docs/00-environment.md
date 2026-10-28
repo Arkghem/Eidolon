@@ -76,6 +76,13 @@ winget install --id BaldurKarlsson.RenderDoc -e `
 首次拉取 Falcor 与依赖时，请使用你能连通的通道（代理 / VPN / 公司镜像 / 离线包），
 拉完一次之后本地构建不再需要网络。
 
+动手前先跑一次预检，别靠猜：
+
+```powershell
+pwsh -File tools\preflight.ps1          # 30 秒，给出三条链路实测速率 + ETA 结论
+pwsh -File tools\preflight.ps1 -Strict  # ETA 超阈值时退出码 1（适合写进检查脚本）
+```
+
 ### 镜像尝试结果（2026-10-28，省下次的时间）
 
 | 通道 | 结果 |
