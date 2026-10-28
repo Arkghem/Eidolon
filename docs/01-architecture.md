@@ -47,6 +47,9 @@ add_subdirectory(D:/Eidolon/research/passes/HelloPass ${CMAKE_BINARY_DIR}/eidolo
 # <<< eidolon overlay
 ```
 
+`research/apps.txt`（可选，默认为空）里登记的应用会以同样方式追加到同一个块里，
+走 `add_falcor_executable()` 而非 `add_plugin()`——两者构建语义不同，清单也故意分开。
+
 3. 以 UTF-8（无 BOM）写回。
 
 要点：
