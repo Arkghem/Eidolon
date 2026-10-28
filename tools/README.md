@@ -6,6 +6,7 @@ PowerShell 自动化。全部兼容 Windows PowerShell 5.1 与 PowerShell 7（�
 
 | 脚本 | 什么时候跑 | 作用 |
 |---|---|---|
+| `preflight.ps1` | **装环境之前**、或下载卡住时 | 30 秒测三条关键链路的真实吞吐，换算出首次搭建的 ETA，把"能不能开始这 10 GB"变成可判断的结论 |
 | `verify.ps1` | 任何时候怀疑环境有问题 | 只读体检：VS/SDK/驱动/盘/子模块/RenderDoc/覆盖层状态。HARD 问题退出码 1 |
 | `install-toolchain.ps1` | 一次性 | 装 VS2022 BuildTools + SDK 19041 + RenderDoc（非管理员会自己走 UAC） |
 | `bootstrap.ps1` | 一次性 | 串起：装工具链 → 体检 → 加子模块 → 拉 packman → configure → 构建 → 冒烟跑 |

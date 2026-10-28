@@ -35,6 +35,9 @@ D:\Eidolon
 ## 三步启动
 
 ```powershell
+# 0) 先量一下网络：首次搭建要下载 ~10 GB，别在拉不动的链路上开始
+pwsh -File tools\preflight.ps1
+
 # 1) 环境体检（并把缺失项告诉你）
 pwsh -File tools\verify.ps1
 
