@@ -9,10 +9,11 @@
 ## 约定
 
 - 一个应用一个目录：`research/apps/<Name>/`，包含 `CMakeLists.txt`、`<Name>.cpp`。
-- 与 pass 一样通过注入清单进入 Falcor 构建树——但注意：注入点是 `add_plugin()` 的 pass 目录，
-  **app 需要额外的注入点**（`<repo>\research\apps` 的一行 `add_subdirectory`，由 `tools\sync-passes.ps1 -IncludeApps` 生成）。
-- 用上游的 `add_falcor_executable(<Name>)` 创建目标，它会把可执行文件放进 `<build>\bin[<cfg>]\`，
-  并统一链接 `Falcor` 库。
+- 在 `research/apps.txt` 里登记名字，`tools\sync-passes.ps1` 会把它注入到
+  Falcor 构建树的同一个覆盖层块里（与 pass 相同机制，见 `docs/01-architecture.md`）。
+- 用上游的 `add_falcor_executable(<Name>)` 创建目标，它会把可执行文件放进
+  `<build>\bin[<cfg>]\`，并统一链接 `Falcor` 库。
+- 清单是空的就什么都不注入；删掉名字后记得重跑 `sync-passes.ps1` 并重新 configure。
 
 ## 什么时候不要用它
 

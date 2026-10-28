@@ -1,0 +1,12 @@
+# ============================================================================
+#  Eidolon app registry -- optional, for research/apps/ (full applications).
+#
+#  与 research/passes.txt 同样的规则：一行一个名字（= research\apps\<名字>\，
+#  且该目录必须有 CMakeLists.txt）。空文件 = 不注入任何 app。
+#
+#  为什么分开：pass 是插件库（运行时被 Mogwai 加载），app 是独立可执行文件
+#  （用上游 add_falcor_executable()），两者构建语义不同，混在一张清单里会让人
+#  误以为 app 也会被 Mogwai 发现。
+# ============================================================================
+
+# （空）

@@ -115,6 +115,35 @@ foreach ($pkg in $packages) {
     $binDir = "`${CMAKE_BINARY_DIR}/eidolon/$pkg"
     $lines.Add("add_subdirectory($srcDir $binDir)")
 }
+
+# Optional: research/apps/ hosts full Falcor applications (add_falcor_executable)
+# rather than plugin libraries. Same opt-in mechanism, different registry.
+$appsRegistry = Join-Path $script:EidolonRoot 'research\apps.txt'
+$appsRoot = Join-Path $script:EidolonRoot 'research\apps'
+$apps = @()
+if (Test-Path $appsRegistry) {
+    $lineNo = 0
+    foreach ($raw in (Get-Content -Path $appsRegistry -Encoding UTF8)) {
+        $lineNo++
+        $line = $raw.Trim()
+        if (-not $line) { continue }
+        if ($line.StartsWith('#')) { continue }
+        if ($line -match '\s') {
+            throw "apps.txt:$lineNo invalid entry '$line' (names must not contain whitespace)."
+        }
+        if (-not (Test-Path (Join-Path (Join-Path $appsRoot $line) 'CMakeLists.txt'))) {
+            throw "apps.txt lists '$line' but research\apps\$line\CMakeLists.txt does not exist."
+        }
+        $apps += $line
+    }
+    $apps = $apps | Sort-Object -Unique
+}
+foreach ($app in $apps) {
+    $appSrc = ConvertTo-CmakePath (Join-Path $appsRoot $app)
+    $appBin = "`${CMAKE_BINARY_DIR}/eidolon/apps/$app"
+    $lines.Add("add_subdirectory($appSrc $appBin)")
+}
+
 $lines.Add($script:OverlayMarkerEnd)
 
 # -----------------------------------------------------------------------------
@@ -144,7 +173,7 @@ if (Test-Path $cmakeLists) {
 }
 
 if ($current -ceq $content) {
-    Write-Ok "vendor/falcor injection already up to date ($($packages.Count) package(s))."
+    Write-Ok "vendor/falcor injection already up to date ($($packages.Count) package(s), $($apps.Count) app(s))."
     # Explicit exit code: callers (verify.ps1 -Check) inspect $LASTEXITCODE.
     exit 0
 }
@@ -156,7 +185,7 @@ if ($Check) {
 
 if ($PSCmdlet.ShouldProcess($cmakeLists, "write overlay block ($($packages.Count) package(s))")) {
     Write-Utf8NoBom -Path $cmakeLists -Content $content
-    Write-Ok "Injected $($packages.Count) package(s): $($packages -join ', ')"
+    Write-Ok "Injected $($packages.Count) package(s), $($apps.Count) app(s): $((@($packages) + @($apps)) -join ', ')"
     Write-Step 'Re-run CMake configure so the new subdirectories are picked up: tools\build.ps1 -Configure'
 }
 

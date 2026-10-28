@@ -22,6 +22,7 @@ D:\Eidolon
 |---|---|
 | 工程结构、脚本、文档、ADR | ✅ 已交付（本仓库） |
 | `hello` pass + 示例实验 | ✅ 已写好（`HelloPass` / `experiments\0001-hello-pass`） |
+| 离线功能验证 | ✅ 已实跑：假 Falcor 树注入/幂等/还原、脚手架生成、`-DryRun`、PSNR/SSIM 校核 |
 | VS2022 BuildTools + SDK 19041 + RenderDoc | ⏳ 由你安装（`docs\00-environment.md` 有命令） |
 | `vendor\falcor` 子模块落地 | ⏳ 首次可联网时 `tools\bootstrap.ps1` 自动拉取 |
 | 首次构建 / 出图 / 抓帧验收 | ⏳ 待环境就绪 |
