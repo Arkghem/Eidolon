@@ -25,7 +25,10 @@ from pathlib import Path
 def experiment_title(readme: Path) -> str:
     if not readme.is_file():
         return ""
-    for line in readme.read_text(encoding="utf-8", errors="replace").splitlines():
+    # utf-8-sig: tolerate a BOM, which Windows editors (and PowerShell 5.1's
+    # Set-Content -Encoding UTF8) happily add. Without this the first heading
+    # silently stops matching.
+    for line in readme.read_text(encoding="utf-8-sig", errors="replace").splitlines():
         line = line.strip()
         if line.startswith("# "):
             return line[2:].strip()
@@ -46,7 +49,7 @@ def gather(repo_root: Path) -> list[dict]:
         for candidate in (results / "compare" / "metrics.json", results / "metrics.json"):
             if candidate.is_file():
                 try:
-                    metrics = json.loads(candidate.read_text(encoding="utf-8"))
+                    metrics = json.loads(candidate.read_text(encoding="utf-8-sig"))
                 except json.JSONDecodeError:
                     continue
                 break

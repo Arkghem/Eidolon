@@ -42,6 +42,7 @@ pwsh -File tools\bootstrap.ps1
 
 # 3) 之后日常
 pwsh -File tools\build.ps1 -Target HelloPass
+pwsh -File tools\check-build.ps1
 pwsh -File tools\run-experiment.ps1 -Experiment 0001-hello-pass
 pwsh -File tools\run-experiment.ps1 -Experiment 0001-hello-pass -Capture
 ```

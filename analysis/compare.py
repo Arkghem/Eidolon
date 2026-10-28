@@ -13,6 +13,9 @@ Layout it expects (created by your own runs, not by the tooling):
 
 Frame names are matched by their trailing index, so `ref_0000.png` pairs with
 `out_0000.png` and with `0000.png`.
+
+matplotlib is optional: without it the numbers are still computed and written to
+CSV/JSON, only the side-by-side figure is skipped.
 """
 
 from __future__ import annotations
@@ -24,12 +27,8 @@ import re
 import sys
 from pathlib import Path
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
-from PIL import Image  # noqa: E402
+import numpy as np
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from metrics import compute  # noqa: E402
@@ -46,6 +45,40 @@ def collect(folder: Path) -> dict:
     if not folder.is_dir():
         return {}
     return {frame_key(p): p for p in sorted(folder.iterdir()) if p.suffix.lower() in IMAGE_EXTS}
+
+
+def save_grid(keys, base: dict, cand: dict, fig_path: Path) -> bool:
+    """Write a baseline/candidate/|diff| grid. Returns False when matplotlib is absent."""
+    try:
+        import matplotlib
+
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except ImportError:
+        print("warning: matplotlib not installed - skipping the comparison figure.")
+        print("         pip install -r analysis/requirements.txt")
+        return False
+
+    shown = keys[:3]
+    fig, axes = plt.subplots(len(shown), 3, figsize=(12, 3.4 * len(shown)), squeeze=False)
+    for row_idx, k in enumerate(shown):
+        a = np.asarray(Image.open(base[k]).convert("RGB")).astype(np.float32) / 255.0
+        b = np.asarray(Image.open(cand[k]).convert("RGB")).astype(np.float32) / 255.0
+        diff = np.abs(a - b).mean(axis=2)
+        panels = [
+            (a, f"baseline {k}", None),
+            (b, f"candidate {k}", None),
+            (np.clip(diff * 8.0, 0, 1), "|diff| x8", "magma"),
+        ]
+        for col, (data, title, cmap) in enumerate(panels):
+            ax = axes[row_idx][col]
+            ax.imshow(data, cmap=cmap)
+            ax.set_title(title, fontsize=9)
+            ax.axis("off")
+    fig.tight_layout()
+    fig.savefig(fig_path, dpi=120)
+    plt.close(fig)
+    return True
 
 
 def main(argv=None) -> int:
@@ -91,27 +124,8 @@ def main(argv=None) -> int:
     json_path = out_dir / "metrics.json"
     json_path.write_text(json.dumps(rows, indent=2), encoding="utf-8")
 
-    # Visual grid: baseline | candidate | abs diff (amplified) for up to 3 frames.
-    shown = keys[:3]
-    fig, axes = plt.subplots(len(shown), 3, figsize=(12, 3.4 * len(shown)), squeeze=False)
-    for row_idx, k in enumerate(shown):
-        a = np.asarray(Image.open(base[k]).convert("RGB")).astype(np.float32) / 255.0
-        b = np.asarray(Image.open(cand[k]).convert("RGB")).astype(np.float32) / 255.0
-        diff = np.abs(a - b).mean(axis=2)
-        panels = [
-            (a, f"baseline {k}"),
-            (b, f"candidate {k}"),
-            (np.clip(diff * 8.0, 0, 1), "|diff| x8"),
-        ]
-        for col, (data, title) in enumerate(panels):
-            ax = axes[row_idx][col]
-            ax.imshow(data, cmap=None if col < 2 else "magma")
-            ax.set_title(title, fontsize=9)
-            ax.axis("off")
-    fig.tight_layout()
     fig_path = out_dir / "compare.png"
-    fig.savefig(fig_path, dpi=120)
-    plt.close(fig)
+    save_grid(keys, base, cand, fig_path)
 
     mean_psnr = float(np.mean([r["psnr"] for r in rows]))
     mean_ssim = float(np.mean([r["ssim"] for r in rows]))
@@ -119,8 +133,10 @@ def main(argv=None) -> int:
     print(f"frames : {len(rows)}")
     print(f"PSNR   : {mean_psnr:.3f} dB (mean)")
     print(f"SSIM   : {mean_ssim:.4f} (mean)")
-    print(f"figure : {fig_path}")
+    if fig_path.is_file():
+        print(f"figure : {fig_path}")
     print(f"csv    : {csv_path}")
+    print(f"json   : {json_path}")
     return 0
 
 
