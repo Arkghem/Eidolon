@@ -57,6 +57,10 @@ add_subdirectory(D:/Eidolon/research/passes/HelloPass ${CMAKE_BINARY_DIR}/eidolo
 - **源目录是绝对路径**，指向仓库树外，所以必须显式给第二个参数（构建目录）。
   CMake 允许绝对源目录，这也是不用 junction/symlink 的原因。
 - **绝对路径意味着仓库不能随意搬家**。搬完重跑 `sync-passes.ps1`（`verify.ps1` 会比对）。
+- 生成文件以 **LF** 写入。Falcor 的 `.gitattributes` 是 `* text=auto`，所以在
+  `core.autocrlf=true` 的 Windows 上，工作区里的其他文件可能是 CRLF，而这一个文件是 LF。
+  `git -C vendor/falcor diff` 仍然只显示我们的新增行（git 比对前会归一化）——真实上游 9.0
+  文件上实测：**5 行新增、0 行删除**。
 - `research/shared` 必须排在所有 pass 之前：pass 都 `target_link_libraries(... EidolonShared)`。
 - 撤销：`tools\clean-passes.ps1`（等价于 `git -C vendor/falcor checkout -- Source/RenderPasses/CMakeLists.txt`）。
 

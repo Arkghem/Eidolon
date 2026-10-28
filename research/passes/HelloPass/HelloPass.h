@@ -12,6 +12,7 @@
 #pragma once
 
 #include "Falcor.h"
+#include "Core/Pass/ComputePass.h"
 #include "RenderGraph/RenderPass.h"
 
 using namespace Falcor;
