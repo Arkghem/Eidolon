@@ -1,0 +1,12 @@
+numpy>=1.26
+pillow>=10.0
+matplotlib>=3.8
+imageio>=2.34
+
+# Optional image-quality metric that correlates better with human perception
+# than PSNR/SSIM. Install with: pip install flip-evaluator
+# flip-evaluator>=0.3
+#
+# Optional: structural_similarity from scikit-image (metrics.py falls back to a
+# built-in uniform-window implementation when it is absent).
+# scikit-image>=0.22

@@ -1,0 +1,21 @@
+* text=auto eol=lf
+
+# Windows scripts and solutions keep CRLF so cmd.exe / MSBuild behave.
+*.ps1  text eol=crlf
+*.psm1 text eol=crlf
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.sln  text eol=crlf
+*.vcxproj     text eol=crlf
+*.vcxproj.*   text eol=crlf
+
+# Binary assets
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.exr  binary
+*.hdr  binary
+*.rdc  binary
+*.bin  binary
+*.dds  binary
+*.ktx  binary
