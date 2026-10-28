@@ -76,6 +76,20 @@ winget install --id BaldurKarlsson.RenderDoc -e `
 首次拉取 Falcor 与依赖时，请使用你能连通的通道（代理 / VPN / 公司镜像 / 离线包），
 拉完一次之后本地构建不再需要网络。
 
+### 镜像尝试结果（2026-10-28，省下次的时间）
+
+| 通道 | 结果 |
+|---|---|
+| `gitee.com/mirrors/Falcor` | ❌ 是 Netflix 的 **falcor.js** 前端库，同名不同物 |
+| `gitee.com/mirrors_NVIDIA/Falcor` | ❌ 空壳（只有 README.md） |
+| `ghfast.top` / `bgithub` / `kkgithub` / `gitclone.com` | ❌ 连接超时或 0 字节 |
+| `ghproxy.net` | ❌ 0.6 KB/s，等于不可用 |
+| `cdn.jsdelivr.net/gh/NVIDIAGameWorks/Falcor@9.0/<path>` | ✅ **单文件可用**（每个小文件约 1–10 s），可用来核对头文件/API，但不能用来下载整仓 |
+
+结论：需要整仓时没有可用捷径，只能等一条能连 GitHub 的链路。核对单个源文件时
+jsDelivr 足够（本次就是靠它核实了 `ComputePass.h`、`RenderPass.h`、`Dictionary.h`、
+`Gui.h`、`ShaderVar.h`、`RenderPassStandardFlags.h` 等）。
+
 `tools/install-toolchain.ps1` 在这种网络下会失败并留下
 `out/logs/p0-install.log`——去那里看它卡在哪一步，不要反复重试。
 
