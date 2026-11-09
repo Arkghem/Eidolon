@@ -95,8 +95,8 @@ if ($Graph) {
     else { throw "Render graph not found: $Graph" }
 }
 
-$sceneArg = $Scene
-if ($Scene -and (Test-Path $Scene)) { $sceneArg = (Resolve-Path $Scene).Path }
+$sceneArg = $null
+if ($Scene) { $sceneArg = Resolve-FalcorScenePath -Scene $Scene }
 
 Set-FalcorMediaFolders | Out-Null
 

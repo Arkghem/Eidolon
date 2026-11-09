@@ -109,6 +109,46 @@ function Assert-Path {
 
 <#
 .SYNOPSIS
+    Resolve a scene argument to an absolute path where possible.
+
+.DESCRIPTION
+    Falcor is launched with its working directory set to the build's bin folder,
+    so a scene written as `media\Arcade\Arcade.pyscene` (the path used in Falcor's
+    own docs) would be looked up relative to bin and fail. Media lives under
+    vendor\falcor\media, which is exactly one hop away.
+
+    Resolution order:
+      1. the path itself (absolute, or relative to the current directory)
+      2. relative to the repo root
+      3. relative to vendor\falcor  (this is the `media\...` case)
+
+    When nothing matches, the string is returned unchanged so Falcor's own search
+    paths (FALCOR_MEDIA_FOLDERS) still get a chance.
+#>
+function Resolve-FalcorScenePath {
+    param([string]$Scene)
+
+    if ([string]::IsNullOrWhiteSpace($Scene)) { return $null }
+
+    $candidates = @()
+    if ([System.IO.Path]::IsPathRooted($Scene)) {
+        $candidates += $Scene
+    }
+    else {
+        $candidates += (Join-Path (Get-Location).Path $Scene)
+        $candidates += (Join-Path $script:EidolonRoot $Scene)
+        $candidates += (Join-Path $script:FalcorDir $Scene)
+    }
+
+    foreach ($candidate in $candidates) {
+        if (Test-Path $candidate) { return (Resolve-Path $candidate).Path }
+    }
+
+    return $Scene
+}
+
+<#
+.SYNOPSIS
     Point FALCOR_MEDIA_FOLDERS at the workspace asset folders, preserving any
     folders the user already registered.
 #>
