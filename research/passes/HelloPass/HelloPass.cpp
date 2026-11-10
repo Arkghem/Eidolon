@@ -4,6 +4,9 @@
 #include "RenderGraph/RenderPassStandardFlags.h"
 
 #include "Eidolon/Common.hpp"
+#if defined(_WIN32)
+#include "Eidolon/RenderDoc.hpp"
+#endif
 
 extern "C" FALCOR_API_EXPORT void registerPlugin(Falcor::PluginRegistry& registry)
 {
@@ -12,8 +15,9 @@ extern "C" FALCOR_API_EXPORT void registerPlugin(Falcor::PluginRegistry& registr
 
 namespace
 {
-// Relative to the shader output directory (target_copy_shaders() deploys
-// shaders/HelloPass.cs.slang to <bin>/shaders/RenderPasses/HelloPass/).
+// Relative to the shader output directory. The shader sits next to this file
+// (upstream pass convention), so target_copy_shaders() deploys it to
+// <bin>/shaders/RenderPasses/HelloPass/ with no extra directory level.
 const char kComputeShader[] = "RenderPasses/HelloPass/HelloPass.cs.slang";
 
 const char kFrequency[] = "frequency";
@@ -96,6 +100,12 @@ void HelloPass::execute(RenderContext* pRenderContext, const RenderData& renderD
     var["gOutput"] = pOutput;
 
     mpComputePass->execute(pRenderContext, dims.x, dims.y, 1u);
+
+#if defined(_WIN32)
+    // Optional scripted capture: no-op unless EIDOLON_RDOC_CAPTURE_FRAME is set
+    // and the process was launched by RenderDoc. See docs/03-renderdoc.md.
+    Eidolon::maybeCaptureAtFrame(mFrameIndex);
+#endif
 
     Eidolon::setFrameIndex(dict, mFrameIndex);
     mFrameIndex++;

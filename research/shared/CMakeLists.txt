@@ -13,6 +13,9 @@ add_library(EidolonShared INTERFACE)
 
 target_include_directories(EidolonShared INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    # Vendored RenderDoc API header (MIT). Only used by optional in-process
+    # capture hooks; harmless when the process is not under RenderDoc.
+    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/renderdoc
 )
 
 # Host-side helpers only. Slang headers are NOT distributed through this target

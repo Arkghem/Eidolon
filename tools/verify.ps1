@@ -215,6 +215,29 @@ else {
 }
 
 # -----------------------------------------------------------------------------
+# 6b. Windows Developer Mode
+#
+# Verified the hard way on this machine: with developer mode off, gfx's
+# D3D12EnableExperimentalFeatures call fails and D3D12 device creation then fails
+# with "Failed to create device" (both the specific-GPU and the any-GPU attempt).
+# Turning it on was the fix, so treat it as a hard requirement, not a nicety.
+# -----------------------------------------------------------------------------
+
+$unlockKey = 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock'
+$devModeOn = $false
+if (Test-Path $unlockKey) {
+    $unlock = Get-ItemProperty $unlockKey -ErrorAction SilentlyContinue
+    if ($unlock -and $unlock.AllowDevelopmentWithoutDevLicense -eq 1) { $devModeOn = $true }
+}
+if ($devModeOn) {
+    Report 'OK' 'developer mode' 'enabled (D3D12 experimental features available)'
+}
+else {
+    Report 'FAIL' 'developer mode' 'off -> Mogwai will fail with "Failed to create device"'
+    $hard.Add('Windows Developer Mode is off. Enable it in Settings > System > For developers, or elevated: reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /t REG_DWORD /f /v AllowDevelopmentWithoutDevLicense /d 1')
+}
+
+# -----------------------------------------------------------------------------
 # 7. Build tree
 # -----------------------------------------------------------------------------
 

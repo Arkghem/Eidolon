@@ -152,3 +152,57 @@ pwsh -File tools\verify.ps1
 | `out\captures\*.rdc` | 每帧 50–500 MB，随场景/显存涨 |
 
 `FALCOR_ENABLE_USD=OFF` 由 `tools/build.ps1` 默认传入，能省 1–2 GB 与可观编译时间。
+
+## 8. 实测：本机跑通全链路的前置与耗时（2026-11-10）
+
+### 硬前置：Windows 开发者模式
+
+**必须开启，否则 Mogwai 起不来。** 症状是日志里：
+
+```
+(Warning) GFX Warning: cannot enable D3D12 experimental features, 'D3D12EnableExperimentalFeatures' call failed.
+(Warning) Failed to create device on GPU 0 (NVIDIA GeForce RTX 5060).
+(Error)   Failed to create device
+```
+
+根因：Falcor 9 走 gfx 抽象层，建设备时会带 D3D12 实验特性；实验特性只对开发者模式开放，
+调用失败后设备创建也跟着失败（指定 GPU 与任意 GPU 两次都失败）。
+
+修法（任选其一）：
+
+```powershell
+# 1) 设置 → 系统 → 开发者选项 → 开发人员模式
+# 2) 管理员终端：
+reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock" /t REG_DWORD /f /v AllowDevelopmentWithoutDevLicense /d 1
+```
+
+开启后日志变成 `Created GPU device 'NVIDIA GeForce RTX 5060' using 'Direct3D 12' API (SM6.8)`。
+`tools\verify.ps1` 现在会把这条当 HARD 检查。
+
+### 耗时（16 逻辑核 / 32 GB）
+
+| 阶段 | 耗时 |
+|---|---|
+| `git clone --depth 1 --branch 9.0` + 6 个子模块 | 62 s（约 70 MB） |
+| `setup.bat`（packman 拉 3.16 GB） | 约 5 min |
+| `cmake --preset windows-vs2022 -DFALCOR_ENABLE_USD=OFF` | 216 s |
+| `cmake --build ... --config RelWithDebInfo -- /m:16` | **14 min**，0 错误 |
+| 只重编一个插件（`--target HelloPass`） | 约 20 s |
+
+### packman 的包缓存位置
+
+`packman` 把包放在 `D:\packman-repo`（约 3.16 GB），再以 symlink 形式链进
+`vendor\falcor\external\packman\*` 与 `vendor\falcor\tools\.packman\*`。
+这两个目录都被 Falcor 自己的 `.gitignore` 排除，`vendor/falcor` 的 git 状态保持干净。
+
+### 磁盘
+
+构建完 `D:` 剩余约 67 GB（构建产物 + packman + RenderDoc 之后）。注意这台机器的
+`D:\SteamLibrary` 占 212 GB 且在增长，构建前看一眼余量。
+
+### 其他实测结论
+
+- **不使用** `FALCOR_ENABLE_USD=OFF` 时 packman 仍会拉 USD 包（`dependencies.xml` 决定，
+  与 CMake 选项无关），所以关 USD 只省编译不省下载。
+- RenderDoc 1.46 的 winget 包在本机会卡在 msstore 关联查询；`install-toolchain.ps1`
+  已改为超时后退回官方 MSI，这条路是通的。

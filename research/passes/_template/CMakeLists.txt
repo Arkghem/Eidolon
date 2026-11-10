@@ -15,7 +15,7 @@ add_plugin(__PASS_NAME__)
 target_sources(__PASS_NAME__ PRIVATE
     __PASS_NAME__.cpp
     __PASS_NAME__.h
-    shaders/__PASS_NAME__.cs.slang
+    __PASS_NAME__.cs.slang
 )
 
 target_copy_shaders(__PASS_NAME__ RenderPasses/__PASS_NAME__)

@@ -39,6 +39,13 @@ Assert-Path $script:FalcorDir 'vendor/falcor is missing. Run git submodule updat
 
 $buildDir = Join-Path $script:FalcorDir "build\$Preset"
 
+# Falcor pins its own CMake (3.24.1) through packman, and the build tree records
+# that version. Driving it with a newer system CMake fails with a cache mismatch,
+# so prefer the packman copy whenever it exists.
+$cmakeExe = 'cmake'
+$packmanCmake = Join-Path $script:FalcorDir 'tools\.packman\cmake\bin\cmake.exe'
+if (Test-Path $packmanCmake) { $cmakeExe = $packmanCmake }
+
 # -----------------------------------------------------------------------------
 # 1. Submodules + packman dependencies
 # -----------------------------------------------------------------------------
@@ -76,7 +83,7 @@ if (-not $SkipSync) {
 $cacheFile = Join-Path $buildDir 'CMakeCache.txt'
 if ($Configure -or -not (Test-Path $cacheFile)) {
     Write-Step "Configuring preset '$Preset' (FALCOR_ENABLE_USD=OFF)"
-    Invoke-Native cmake @('--preset', $Preset, '-DFALCOR_ENABLE_USD=OFF') $script:FalcorDir | Out-Null
+    Invoke-Native $cmakeExe @('--preset', $Preset, '-DFALCOR_ENABLE_USD=OFF') $script:FalcorDir | Out-Null
 }
 else {
     Write-Skip "configure (build tree already exists; pass -Configure to force)" | Out-Null
@@ -92,7 +99,7 @@ if ($Target.Count -gt 0) {
 }
 
 Write-Step "Building ($Config): $(if ($Target.Count) { $Target -join ', ' } else { 'default target' })"
-Invoke-Native cmake $buildArgs | Out-Null
+Invoke-Native $cmakeExe $buildArgs | Out-Null
 
 # -----------------------------------------------------------------------------
 # 5. Report

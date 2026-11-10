@@ -8,7 +8,7 @@ add_plugin(HelloPass)
 target_sources(HelloPass PRIVATE
     HelloPass.cpp
     HelloPass.h
-    shaders/HelloPass.cs.slang
+    HelloPass.cs.slang
 )
 
 target_copy_shaders(HelloPass RenderPasses/HelloPass)

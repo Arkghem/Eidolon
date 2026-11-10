@@ -117,3 +117,55 @@ motion vector 的采样点与控制台输出的位移是否一致。
    `FALCOR_EXPORT_D3D12_AGILITY_SDK`，但**这属于改上游**，必须记进 `patches/README.md`
 5. 显存是否爆了？→ 降分辨率/换小场景
 6. 看 `out\logs\mogwai-*.log` 末尾有没有 D3D12 设备丢失
+
+## 9. 自动化抓帧：实测跑通的方案（2026-11-10）
+
+### 为什么需要进程内触发
+
+RenderDoc 1.46 的 `renderdoccmd capture --help` 只有这些开关（实测输出）：
+
+```
+-d, --working-dir   -c, --capture-file   -w, --wait-for-exit   --opt-*
+```
+
+**没有 `--capture-frame`，也没有 `--capture-all`**。也就是说 CLI 无法指定"抓第 N 帧"，
+而 Falcor 9.0 自己又不提供任何 RenderDoc 集成。结论：抓帧必须由进程内调用 API 触发。
+
+### 我们怎么做的
+
+- `research/shared/third_party/renderdoc/renderdoc_app.h`：随 RenderDoc 分发的 MIT 头文件。
+- `research/shared/include/Eidolon/RenderDoc.hpp`：动态 `GetModuleHandleA("renderdoc.dll")`
+  + `RENDERDOC_GetAPI(1.6.0)`，提供 `maybeCaptureAtFrame(frameIndex)`。
+  没被 RenderDoc 启动时全程 no-op（不抛异常、不加载任何东西）。
+- pass 在 `execute()` 末尾调用它（`HelloPass` 已接）；由环境变量驱动：
+  `EIDOLON_RDOC_CAPTURE_FRAME=<n>`、`EIDOLON_RDOC_CAPTURE_TEMPLATE=<path>`。
+- `tools/capture.ps1 -Mode cmd` 自动设置这两个变量、传 `-c <template>`，
+  并在结束后把 RenderDoc 生成的 `<template>_frameN.rdc` 归一化成 `<template>.rdc`，
+  再写 `manifest.json`。
+
+### 一条命令
+
+```powershell
+pwsh -File tools\capture.ps1 -Experiment 0001-hello-pass `
+     -Graph experiments\0001-hello-pass\graphs\hello_pass.py `
+     -Mode cmd -Frame 10 -TimeoutSeconds 30 -Width 960 -Height 540
+```
+
+### 三个必须知道的约束
+
+1. **必须窗口模式**。RenderDoc 在 Present 处结束一帧，`--headless` 没有 Present，
+   于是 `TriggerCapture()` 的请求永远等不到边界——日志里会看到
+   `Eidolon: triggered RenderDoc capture at frame 10` 但没有任何 `.rdc`。
+   `capture.ps1` 检测到 `--headless` 会直接警告。
+2. **抓的是下一帧**。`TriggerCapture()` 语义是"下一次呈现时抓"，所以 `-Frame 10`
+   得到的文件是 `_frame11.rdc`（脚本会改名归一化）。这不是 bug。
+3. **开发者模式**。见 `docs/00-environment.md`：没有它连设备都建不出来，更谈不上抓帧。
+
+### 验证抓帧文件是否真的可用
+
+```powershell
+renderdoccmd thumb --out=out\frames\thumb.png "out\captures\0001-hello-pass\<file>.rdc"
+```
+
+能出图就说明 `.rdc` 完整可解析——比"文件大小看起来正常"可靠得多。实测这张缩略图里
+能看到 Mogwai UI、Graph 面板里的 `HelloPass` / `ToneMapper.dst`，以及 144.8 FPS。

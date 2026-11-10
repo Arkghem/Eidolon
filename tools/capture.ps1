@@ -157,15 +157,31 @@ $supportsWorkingDir = $helpText -match '--working-dir'
 
 Write-Skip ("renderdoccmd: capture-frame={0} wait-for-exit={1} working-dir={2}" -f $supportsCaptureFrame, $supportsWaitForExit, $supportsWorkingDir)
 
+# RenderDoc appends the frame number to the template, so keep the template
+# extension-less and normalise afterwards.
+$captureTemplate = [System.IO.Path]::Combine($outDir, ("{0}-{1}" -f $Experiment, $stamp))
+$rdcPath = "$captureTemplate.rdc"
+
 $cmdArgs = New-Object System.Collections.Generic.List[string]
 $cmdArgs.Add('capture')
 if ($supportsWaitForExit) { $cmdArgs.Add('--wait-for-exit') }
 if ($supportsWorkingDir) { $cmdArgs.Add('--working-dir'); $cmdArgs.Add($binDir) }
-$cmdArgs.Add('--capture-file'); $cmdArgs.Add($rdcPath)
+$cmdArgs.Add('--capture-file'); $cmdArgs.Add($captureTemplate)
+
+# Falcor 9 has no RenderDoc integration and renderdoccmd 1.46 cannot target a
+# frame, so the capture is triggered from inside the pass through the RenderDoc
+# API (Eidolon::maybeCaptureAtFrame). The env vars below are what it reads.
 if ($Frame -ge 0) {
-    if ($supportsCaptureFrame) { $cmdArgs.Add('--capture-frame'); $cmdArgs.Add([string]$Frame) }
-    else { Write-Warn 'This renderdoccmd has no --capture-frame; capturing the first present instead.' }
+    $env:EIDOLON_RDOC_CAPTURE_FRAME = [string]$Frame
+    $env:EIDOLON_RDOC_CAPTURE_TEMPLATE = $captureTemplate
+    Write-Skip "in-app capture trigger: frame $Frame (EIDOLON_RDOC_CAPTURE_FRAME)"
 }
+else {
+    Remove-Item Env:\EIDOLON_RDOC_CAPTURE_FRAME -ErrorAction SilentlyContinue
+    Remove-Item Env:\EIDOLON_RDOC_CAPTURE_TEMPLATE -ErrorAction SilentlyContinue
+    Write-Warn 'No -Frame given: nothing will trigger a capture unless you press F12 or the app uses the API.'
+}
+
 $cmdArgs.Add($mogwai)
 foreach ($a in $appArgs) { $cmdArgs.Add($a) }
 
@@ -179,6 +195,13 @@ $startTime = Get-Date
 $argString = ($cmdArgs | ForEach-Object {
     if ($_ -match '\s') { '"' + $_ + '"' } else { $_ }
 }) -join ' '
+
+# RenderDoc ends a capture at a frame boundary, which it detects at Present.
+# A headless run never presents, so the trigger fires but nothing is written.
+if ($argString -match '--headless') {
+    Write-Warn 'Capture run is --headless: RenderDoc needs a Present to end a frame, so no .rdc will be written. Drop --headless for capture runs.'
+}
+
 $proc = Start-Process -FilePath $renderdoccmd -ArgumentList $argString -PassThru -NoNewWindow
 
 $timedOut = $false
@@ -202,9 +225,23 @@ $exitCode = if ($proc.HasExited) { $proc.ExitCode } else { -1 }
 # Verify the capture + write the manifest
 # -----------------------------------------------------------------------------
 
+# RenderDoc names the file after the template plus the captured frame number
+# (e.g. "<template>_10.rdc"). Normalise to the single name the manifest records.
+if (-not (Test-Path $rdcPath)) {
+    $produced = Get-ChildItem $outDir -Filter ((Split-Path -Leaf $captureTemplate) + '*.rdc') -ErrorAction SilentlyContinue |
+        Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($produced) {
+        Move-Item $produced.FullName $rdcPath -Force
+        Write-Skip "normalised capture name: $(Split-Path -Leaf $produced.FullName) -> $(Split-Path -Leaf $rdcPath)"
+    }
+}
+
 if (-not (Test-Path $rdcPath)) {
     Write-Fail "No capture file was produced: $rdcPath"
-    throw 'RenderDoc capture failed. Re-run with -Mode interactive to see the error in the UI, and check docs/03-renderdoc.md.'
+    Write-Host '   hints:' -ForegroundColor DarkYellow
+    Write-Host '     - was the pass rebuilt with the in-app trigger? (tools\build.ps1 -Target HelloPass)' -ForegroundColor DarkYellow
+    Write-Host '     - did the run reach the requested frame? (headless needs -TimeoutSeconds)' -ForegroundColor DarkYellow
+    throw 'RenderDoc capture failed. Check docs/03-renderdoc.md (section: automated capture).'
 }
 
 $sizeMb = [math]::Round((Get-Item $rdcPath).Length / 1MB, 2)

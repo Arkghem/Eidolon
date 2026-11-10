@@ -30,6 +30,12 @@ param(
     [string]$Tag = 'adhoc',
     [string]$LogFile,
     [string[]]$ExtraArgs = @(),
+    # Dump frames via the FrameCapture extension (sets EIDOLON_CAPTURE_DIR;
+    # experiment graphs hook into it). Implies nothing about -Headless.
+    [string]$CaptureDir,
+    # Run for this many seconds, then terminate. Needed because headless Mogwai
+    # never exits on its own, while automated smoke tests must finish.
+    [int]$TimeoutSeconds = 0,
     [switch]$DryRun
 )
 
@@ -108,10 +114,35 @@ if ($DryRun) { return }
 $startTime = Get-Date
 $exitCode = 0
 $argArray = @($argList)
+
+if ($CaptureDir) {
+    $captureAbs = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($CaptureDir)
+    if (-not (Test-Path $captureAbs)) { New-Item -ItemType Directory -Path $captureAbs -Force | Out-Null }
+    $env:EIDOLON_CAPTURE_DIR = $captureAbs
+    Write-Skip "frame capture dir: $captureAbs"
+}
+else {
+    Remove-Item Env:\EIDOLON_CAPTURE_DIR -ErrorAction SilentlyContinue
+}
+
 Push-Location $binDir
 try {
-    & $mogwai @argArray
-    $exitCode = $LASTEXITCODE
+    if ($TimeoutSeconds -gt 0) {
+        Write-Skip "will terminate after $TimeoutSeconds s"
+        $proc = Start-Process -FilePath $mogwai -ArgumentList $argArray -PassThru -NoNewWindow
+        if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) {
+            try { $proc.Kill() } catch { }
+            Write-Warn "Mogwai did not exit on its own; terminated after $TimeoutSeconds s (expected in -Headless)."
+            $exitCode = 0
+        }
+        else {
+            $exitCode = $proc.ExitCode
+        }
+    }
+    else {
+        & $mogwai @argArray
+        $exitCode = $LASTEXITCODE
+    }
 }
 finally {
     Pop-Location

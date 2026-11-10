@@ -20,17 +20,18 @@ D:\Eidolon
 
 | 部分 | 状态 |
 |---|---|
-| 工程结构、脚本、文档、ADR | ✅ 已交付（本仓库） |
-| `hello` pass + 示例实验 | ✅ 已写好（`HelloPass` / `experiments\0001-hello-pass`） |
-| 离线功能验证 | ✅ 已实跑：假 Falcor 树注入/幂等/还原、脚手架生成、`-DryRun`、PSNR/SSIM 校核 |
-| VS2022 BuildTools + SDK 19041 + RenderDoc | ⏳ 由你安装（`docs\00-environment.md` 有命令） |
-| `vendor\falcor` 子模块落地 | ⏳ 首次可联网时 `tools\bootstrap.ps1` 自动拉取 |
-| 首次构建 / 出图 / 抓帧验收 | ⏳ 待环境就绪 |
+| 工程结构、脚本、文档、ADR | ✅ 已交付 |
+| `vendor\falcor` 子模块（9.0，`759aad0`） | ✅ 已落地并纳入 `.gitmodules` |
+| VS2022 BuildTools + SDK 19041 + RenderDoc 1.46 | ✅ 已安装（`tools\install-toolchain.ps1`） |
+| 首次 RelWithDebInfo 构建 | ✅ `configure` 216 s + `build` 14 min，0 错误 |
+| 插件契约（DLL / `plugins.json` / 着色器部署） | ✅ `tools\check-build.ps1` 全绿 |
+| 出图（HelloPass 渲染） | ✅ 960×540 三帧落盘，图案与预期一致 |
+| RenderDoc 抓帧闭环 | ✅ 20.37 MB `.rdc`，`renderdoccmd thumb` 可回放，含 manifest |
+| 环境体检 | ✅ `tools\verify.ps1` **无任何硬阻塞** |
 
-> 说明：本仓库交付时所在的环境**无法访问国际链路**（实测 GitHub ~9 KB/s、
-> aka.ms 超时），因此 Falcor 源码与 7–10 GB 工具链没能在这里落地。
-> 这是网络问题，不是设计问题——所有脚本都已按"首次联网即可一键跑完"写好。
-> 细节与实测数据见 [`docs/00-environment.md`](docs/00-environment.md) 第 4 节。
+> 这一轮把原先"待环境就绪"的项目全部打通了。过程中真正踩到的坑（都不是设计问题，
+> 而是环境/上游细节）已写进 `docs\00-environment.md`、`docs\03-renderdoc.md` 与
+> `experiments\0001-hello-pass\README.md` 的实测记录里——那几段比任何教程都值钱。
 
 ## 三步启动
 

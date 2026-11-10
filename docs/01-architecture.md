@@ -85,7 +85,7 @@ add_subdirectory(D:/Eidolon/research/passes/HelloPass ${CMAKE_BINARY_DIR}/eidolo
 target_copy_shaders(HelloPass RenderPasses/HelloPass)
 ```
 
-→ 源 `shaders/HelloPass.cs.slang` 部署到 `<bin>/shaders/RenderPasses/HelloPass/`，
+→ 源 `HelloPass.cs.slang`（与 `.cpp` 同级，上游惯例）部署到 `<bin>/shaders/RenderPasses/HelloPass/`，
 代码里用 `"RenderPasses/HelloPass/HelloPass.cs.slang"` 加载。这是上游 pass 的统一写法，
 照着写就不会错。
 
@@ -94,6 +94,18 @@ target_copy_shaders(HelloPass RenderPasses/HelloPass)
 共享 `.slangh` 暂时没有自动部署机制（`target_copy_shaders` 只拷目标自己的源文件）。
 现状与将来做法见 `research/shared/shaders/Eidolon/README.md`，别在没验证的情况下假设
 include 路径可用。
+
+### 4b. 可选的 RenderDoc 抓帧钩子
+
+`research/shared/include/Eidolon/RenderDoc.hpp` 提供 `Eidolon::maybeCaptureAtFrame(frameIndex)`：
+动态取已注入的 `renderdoc.dll` 的 API，在指定帧触发一次抓帧（环境变量
+`EIDOLON_RDOC_CAPTURE_FRAME` 驱动）。不在 RenderDoc 下运行时是纯 no-op。
+
+为什么需要它：RenderDoc 1.46 的 CLI 没有"抓第 N 帧"的参数，Falcor 9 也没有进程内集成，
+所以抓帧只能由 pass 自己发起。用法与约束见 `docs/03-renderdoc.md` 第 9 节
+（**必须窗口模式**，因为 RenderDoc 在 Present 处结束帧）。
+
+这是目前唯一可选用的 pass 侧依赖；已有的 pass 不接它也能正常构建运行。
 
 ## 5. 帧资源契约
 

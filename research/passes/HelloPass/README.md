@@ -36,6 +36,23 @@
 
 `experiments\0001-hello-pass\`
 
+## 构建与运行结果（2026-11-10 实测）
+
+| 项 | 结果 |
+|---|---|
+| `HelloPass.dll` | 一次编译通过（上面的 API 核对没白做） |
+| 着色器部署 | `shaders\RenderPasses\HelloPass\HelloPass.cs.slang` |
+| 加载 | `Loaded 33 plugin(s)`，其中含本 pass |
+| 首帧运行 | `Created GPU device 'NVIDIA GeForce RTX 5060' using 'Direct3D 12' API (SM6.8)` |
+| 出图 | 960×540 三帧落盘，图案与设计一致 |
+| 抓帧 | `.rdc` 20.37 MB，`renderdoccmd thumb` 可回放 |
+
+### 抓帧钩子
+
+`execute()` 末尾调用 `Eidolon::maybeCaptureAtFrame(mFrameIndex)`（`Eidolon/RenderDoc.hpp`），
+由环境变量 `EIDOLON_RDOC_CAPTURE_FRAME` 驱动。`tools\capture.ps1` 会自动设置，
+所以抓帧不需要人按 F12。注意必须窗口模式（headless 没有 Present，RenderDoc 不会写出文件）。
+
 ## API 依据（逐条核对自 Falcor 9.0 源码）
 
 本机没有 MSVC，所以这份代码在首次构建前**没有编译过**。为了把首次构建的返工降到最低，

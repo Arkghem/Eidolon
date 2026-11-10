@@ -77,9 +77,13 @@ foreach ($pkg in $packages) {
     Check (Test-Path $dll) "plugin: $pkg" $(if (Test-Path $dll) { $dll } else { 'DLL missing - was the CMakeLists change re-configured?' })
 
     $shaderDir = Join-Path $shaderRoot $pkg
+    $shaderExts = @('.slang', '.slangh', '.hlsl', '.hlsli')
     $slangs = @()
     if (Test-Path $shaderDir) {
-        $slangs = Get-ChildItem $shaderDir -File -Include '*.slang', '*.slangh', '*.hlsl', '*.hlsli' -ErrorAction SilentlyContinue
+        # NOTE: -Include without -Recurse (or a trailing \*) silently does not
+        # filter here; this check reported a false failure until it was changed.
+        $slangs = Get-ChildItem $shaderDir -File -ErrorAction SilentlyContinue |
+            Where-Object { $shaderExts -contains $_.Extension }
     }
     Check ($slangs.Count -gt 0) "shaders: $pkg" $(if ($slangs.Count -gt 0) { "$($slangs.Count) file(s) in $shaderDir" } else { "nothing deployed to $shaderDir (target_copy_shaders?)" })
 }
