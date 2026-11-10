@@ -159,6 +159,22 @@ if ($LASTEXITCODE -ne 0) {
 $base = ($upstream -join "`n") -replace "`r`n", "`n"
 $base = $base.TrimEnd("`n")
 
+# Defensive: strip any overlay block that already exists in the committed
+# content. The block is supposed to live only in the working tree, but it can
+# end up committed (a local commit inside the submodule did exactly that once),
+# and then "HEAD + new block" would emit the block twice, which CMake rejects
+# with "binary directory is already used to build a source directory".
+$blockPattern = "(?s)\r?\n?" +
+    [regex]::Escape($script:OverlayMarkerBegin) +
+    ".*?" +
+    [regex]::Escape($script:OverlayMarkerEnd) +
+    "\r?\n?"
+$stripped = [regex]::Replace($base, $blockPattern, "")
+if ($stripped -ne $base) {
+    Write-Warn 'Removed an already-present overlay block from the base content (it was committed into vendor/falcor).'
+    $base = $stripped.TrimEnd("`n")
+}
+
 $content = $base + "`n`n" + (($lines | ForEach-Object { $_ }) -join "`n") + "`n"
 $content = $content -replace "`r`n", "`n"
 

@@ -86,7 +86,8 @@ void HelloPass::execute(RenderContext* pRenderContext, const RenderData& renderD
     }
 
     const auto& pOutput = renderData.getTexture("color");
-    if (!pOutput) return;
+    if (!pOutput)
+        return;
 
     const uint2 dims = renderData.getDefaultTextureDims();
     FALCOR_ASSERT(dims.x > 0 && dims.y > 0);
@@ -124,5 +125,6 @@ void HelloPass::renderUI(Gui::Widgets& widget)
         dirty = true;
     }
 
-    if (dirty) mOptionsChanged = true;
+    if (dirty)
+        mOptionsChanged = true;
 }

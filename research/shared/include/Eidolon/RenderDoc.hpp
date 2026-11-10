@@ -58,32 +58,38 @@ inline bool& renderDocTried()
 /// Returns true when the process is under RenderDoc and its API is usable.
 inline bool renderDocLoad()
 {
-    if (detail::renderDocTried()) return detail::renderDocApi() != nullptr;
+    if (detail::renderDocTried())
+        return detail::renderDocApi() != nullptr;
     detail::renderDocTried() = true;
 
     // When launched by RenderDoc the DLL is already injected; loading by name
     // would find nothing outside that case.
     HMODULE module = GetModuleHandleA("renderdoc.dll");
-    if (!module) return false;
+    if (!module)
+        return false;
 
     auto getApi = reinterpret_cast<pRENDERDOC_GetAPI>(GetProcAddress(module, "RENDERDOC_GetAPI"));
-    if (!getApi) return false;
+    if (!getApi)
+        return false;
 
     RENDERDOC_API_1_6_0* api = nullptr;
-    if (getApi(eRENDERDOC_API_Version_1_6_0, reinterpret_cast<void**>(&api)) != 1) return false;
+    if (getApi(eRENDERDOC_API_Version_1_6_0, reinterpret_cast<void**>(&api)) != 1)
+        return false;
 
     detail::renderDocApi() = api;
     return true;
 }
 inline void renderDocSetCaptureTemplate(const char* path)
 {
-    if (!renderDocLoad() || !path) return;
+    if (!renderDocLoad() || !path)
+        return;
     detail::renderDocApi()->SetCaptureFilePathTemplate(path);
 }
 
 inline void renderDocTriggerCapture()
 {
-    if (!renderDocLoad()) return;
+    if (!renderDocLoad())
+        return;
     detail::renderDocApi()->TriggerCapture();
 }
 
@@ -106,8 +112,10 @@ inline void maybeCaptureAtFrame(uint32_t frameIndex)
             renderDocSetCaptureTemplate(templateEnv);
     }
 
-    if (done || captureFrame < 0) return;
-    if (static_cast<int>(frameIndex) != captureFrame) return;
+    if (done || captureFrame < 0)
+        return;
+    if (static_cast<int>(frameIndex) != captureFrame)
+        return;
 
     done = true;
     if (!renderDocLoad())

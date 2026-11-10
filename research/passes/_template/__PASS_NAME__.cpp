@@ -70,7 +70,8 @@ void __PASS_NAME__::execute(RenderContext* pRenderContext, const RenderData& ren
     }
 
     const auto& pOutput = renderData.getTexture("color");
-    if (!pOutput) return;
+    if (!pOutput)
+        return;
 
     const uint2 dims = renderData.getDefaultTextureDims();
     FALCOR_ASSERT(dims.x > 0 && dims.y > 0);
@@ -93,5 +94,6 @@ void __PASS_NAME__::renderUI(Gui::Widgets& widget)
     dirty |= widget.var("Samples per pixel", mSpp, 1u, 64u);
     widget.tooltip("Number of samples accumulated per pixel each frame.", true);
 
-    if (dirty) mOptionsChanged = true;
+    if (dirty)
+        mOptionsChanged = true;
 }

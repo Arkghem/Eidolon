@@ -57,7 +57,12 @@ $roots = @(
 $targets = @()
 foreach ($root in $roots) {
     if (-not (Test-Path $root)) { continue }
-    $targets += Get-ChildItem $root -Recurse -File | Where-Object { $extensions -contains $_.Extension }
+    $targets += Get-ChildItem $root -Recurse -File | Where-Object {
+        $extensions -contains $_.Extension -and
+        # Never reformat vendored third-party headers (they carry their own
+        # license and are replaced on upgrade).
+        $_.FullName -notmatch '\\third_party\\'
+    }
 }
 
 if ($targets.Count -eq 0) {

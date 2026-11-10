@@ -38,7 +38,8 @@ constexpr const char* kSppKey = "eidolon/spp";
 /// Read a uint32 from the internal dictionary, returning `fallback` when absent.
 inline uint32_t getUint(Falcor::Dictionary& dict, const char* key, uint32_t fallback = 0u)
 {
-    if (!dict.keyExists(key)) return fallback;
+    if (!dict.keyExists(key))
+        return fallback;
     uint32_t value = dict[key];
     return value;
 }
@@ -46,7 +47,8 @@ inline uint32_t getUint(Falcor::Dictionary& dict, const char* key, uint32_t fall
 /// Read a float from the internal dictionary, returning `fallback` when absent.
 inline float getFloat(Falcor::Dictionary& dict, const char* key, float fallback = 0.f)
 {
-    if (!dict.keyExists(key)) return fallback;
+    if (!dict.keyExists(key))
+        return fallback;
     float value = dict[key];
     return value;
 }

@@ -20,16 +20,9 @@ using namespace Falcor;
 class HelloPass : public RenderPass
 {
 public:
-    FALCOR_PLUGIN_CLASS(
-        HelloPass,
-        "HelloPass",
-        "Procedural HDR test pattern. Smoke test for the Eidolon research pipeline."
-    );
+    FALCOR_PLUGIN_CLASS(HelloPass, "HelloPass", "Procedural HDR test pattern. Smoke test for the Eidolon research pipeline.");
 
-    static ref<HelloPass> create(ref<Device> pDevice, const Properties& props)
-    {
-        return make_ref<HelloPass>(pDevice, props);
-    }
+    static ref<HelloPass> create(ref<Device> pDevice, const Properties& props) { return make_ref<HelloPass>(pDevice, props); }
 
     HelloPass(ref<Device> pDevice, const Properties& props);
 

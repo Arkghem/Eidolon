@@ -16,10 +16,7 @@ class __PASS_NAME__ : public RenderPass
 public:
     FALCOR_PLUGIN_CLASS(__PASS_NAME__, "__PASS_NAME__", "<one-line description shown in the Mogwai pass list>.");
 
-    static ref<__PASS_NAME__> create(ref<Device> pDevice, const Properties& props)
-    {
-        return make_ref<__PASS_NAME__>(pDevice, props);
-    }
+    static ref<__PASS_NAME__> create(ref<Device> pDevice, const Properties& props) { return make_ref<__PASS_NAME__>(pDevice, props); }
 
     __PASS_NAME__(ref<Device> pDevice, const Properties& props);
 

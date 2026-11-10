@@ -13,8 +13,8 @@ cbuffer CB
     uint gSpp;
 };
 
-[numthreads(8, 8, 1)]
-void main(uint3 dispatchThreadId : SV_DispatchThreadID)
+[numthreads(8, 8, 1)] void main(uint3 dispatchThreadId
+                                : SV_DispatchThreadID)
 {
     uint2 coord = dispatchThreadId.xy;
     if (any(coord >= gResolution))
