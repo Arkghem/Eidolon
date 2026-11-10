@@ -1,0 +1,3 @@
+[submodule "vendor/falcor"]
+	path = vendor/falcor
+	url = https://github.com/NVIDIAGameWorks/Falcor

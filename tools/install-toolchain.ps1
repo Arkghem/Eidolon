@@ -36,6 +36,10 @@ $LogPath = Join-Path $LogDir 'p0-install.log'
 
 $VsPackageId = 'Microsoft.VisualStudio.2022.BuildTools'
 $RenderDocPackageId = 'BaldurKarlsson.RenderDoc'
+# Fallback when winget cannot resolve the package: its msstore correlation step
+# fails on some networks even though the package itself is fine. The MSI is the
+# official installer and needs the same elevation we already have.
+$RenderDocMsiUrl = 'https://renderdoc.org/stable/1.46/RenderDoc_1.46_64.msi'
 $RequiredSdkVersion = '10.0.19041.0'
 $VsWorkloadArgs = @(
     '--quiet'
@@ -76,13 +80,25 @@ function Resolve-Winget {
 }
 
 function Invoke-Winget {
-    param([string[]]$Arguments)
+    param(
+        [string[]]$Arguments,
+        [int]$TimeoutSeconds = 3600
+    )
     $winget = Resolve-Winget
     Write-Note "winget $($Arguments -join ' ')"
-    & $winget @Arguments
-    $code = $LASTEXITCODE
-    if ($code -ne 0) {
-        throw "winget failed with exit code $code. Args: $($Arguments -join ' ')"
+    # Start-Process + WaitForExit(timeout) instead of a plain call: winget can
+    # hang indefinitely on its msstore correlation step (seen on this machine),
+    # and an elevated winget cannot be killed from a non-elevated shell.
+    $argString = ($Arguments | ForEach-Object {
+        if ($_ -match '\s') { '"' + $_ + '"' } else { $_ }
+    }) -join ' '
+    $proc = Start-Process -FilePath $winget -ArgumentList $argString -PassThru -NoNewWindow
+    if (-not $proc.WaitForExit($TimeoutSeconds * 1000)) {
+        try { $proc.Kill() } catch { }
+        throw "winget timed out after $TimeoutSeconds s. Args: $($Arguments -join ' ')"
+    }
+    if ($proc.ExitCode -ne 0) {
+        throw "winget failed with exit code $($proc.ExitCode). Args: $($Arguments -join ' ')"
     }
 }
 
@@ -201,15 +217,42 @@ if (-not $SkipRenderDoc) {
         Write-Note "RenderDoc already present: $rdoc"
     }
     else {
+        $installed = $false
         Write-Step "Installing $RenderDocPackageId"
-        Invoke-Winget -Arguments @(
-            'install'
-            '--id', $RenderDocPackageId
-            '-e'
-            '--accept-package-agreements'
-            '--accept-source-agreements'
-            '--disable-interactivity'
-        )
+        try {
+            Invoke-Winget -Arguments @(
+                'install'
+                '--id', $RenderDocPackageId
+                '-e'
+                '--accept-package-agreements'
+                '--accept-source-agreements'
+                '--disable-interactivity'
+            ) -TimeoutSeconds 600
+            $installed = $true
+        }
+        catch {
+            Write-Note "winget failed ($($_.Exception.Message)); falling back to the official MSI."
+        }
+
+        if (-not $installed) {
+            $msi = Join-Path $env:TEMP 'RenderDoc_installer.msi'
+            Write-Step "Downloading $RenderDocMsiUrl"
+            try {
+                $oldProgress = $ProgressPreference
+                $ProgressPreference = 'SilentlyContinue'
+                Invoke-WebRequest -Uri $RenderDocMsiUrl -OutFile $msi -UseBasicParsing -TimeoutSec 1800
+                $ProgressPreference = $oldProgress
+                Write-Note ("downloaded {0:N1} MB" -f ((Get-Item $msi).Length / 1MB))
+                Write-Step 'Running msiexec /i /qn'
+                $msiProc = Start-Process -FilePath 'msiexec.exe' -ArgumentList @('/i', "`"$msi`"", '/qn', '/norestart') -Wait -PassThru
+                Write-Note "msiexec exit=$($msiProc.ExitCode)"
+                Remove-Item $msi -Force -ErrorAction SilentlyContinue
+            }
+            catch {
+                Write-Note "MSI fallback failed: $($_.Exception.Message)"
+            }
+        }
+
         $rdoc = Get-RenderDocExe
         if ($rdoc) { Write-Note "RenderDoc installed: $rdoc" }
         else { Write-Note 'WARNING: RenderDoc not found after install; re-run tools/verify.ps1 to diagnose.' }
